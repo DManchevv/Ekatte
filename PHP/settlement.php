@@ -56,7 +56,7 @@
 
         public function readSettlementCSV() {
             $isFirstRow = true;
-            if (($handle = fopen("csv/Ek_atte.csv", "r")) !== FALSE) {
+            if (($handle = fopen("../csv/Ek_atte.csv", "r")) !== FALSE) {
                 while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                     if ($isFirstRow) {
                         $isFirstRow = false;
@@ -71,7 +71,7 @@
 
         public function readTownHallCSV() {
             $isFirstRow = true;
-            if (($handle = fopen("csv/Ek_kmet.csv", "r")) !== FALSE) {
+            if (($handle = fopen("../csv/Ek_kmet.csv", "r")) !== FALSE) {
                 while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                     if ($isFirstRow) {
                         $isFirstRow = false;
@@ -87,7 +87,7 @@
 
         public function readMunicipalityCSV() {
             $isFirstRow = true;
-            if (($handle = fopen("csv/Ek_obst.csv", "r")) !== FALSE) {
+            if (($handle = fopen("../csv/Ek_obst.csv", "r")) !== FALSE) {
                 while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                     if ($isFirstRow) {
                         $isFirstRow = false;
@@ -103,7 +103,7 @@
 
         public function readAreaCSV() {
             $isFirstRow = true;
-            if (($handle = fopen("csv/Ek_obl.csv", "r")) !== FALSE) {
+            if (($handle = fopen("../csv/Ek_obl.csv", "r")) !== FALSE) {
                 while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                     if ($isFirstRow) {
                         $isFirstRow = false;
@@ -122,6 +122,6 @@
     //$settlement->readAreaCSV();
     //$settlement->readMunicipalityCSV();
     //$settlement->readTownHallCSV();
-    $settlement->readSettlementCSV();
+    //$settlement->readSettlementCSV();
 
 ?>
