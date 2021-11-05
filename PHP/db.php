@@ -1,10 +1,26 @@
 <?php
     class Database {
         private $conn;
+
         private $insertArea;
         private $insertMunicipality;
         private $insertTownHall;
         private $insertSettlement;
+
+        private $selectArea;
+        private $selectMunicipality;
+        private $selectTownHall;
+        private $selectSettlement;
+
+        private $deleteArea;
+        private $deleteMunicipality;
+        private $deleteTownHall;
+        private $deleteSettlement;
+
+        private $getSettlements;
+        private $getTownHalls;
+        private $getMunicipalities;
+        private $getAreas;
 
         public function __construct() {
             $config = parse_ini_file('config.ini', true);
@@ -22,8 +38,7 @@
             try {
                 $this->conn = new PDO("$type:host=$host;port=$port;dbname=$name", $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
                 $this->prepareStatements();
-                echo "Connection successful\n";
-            } catch(Exception $e) {
+            } catch(PDOException $e) {
                 echo "Connection failed\n" . $e->getMessage();
             }
         }
@@ -41,6 +56,42 @@
             $sql = "INSERT INTO public.settlement (ekatte, t_v_m, name, town_hall_ID) VALUES (:ekatte, :t_v_m, :name, :town_hall_ID)";
             $this->insertSettlement = $this->conn->prepare($sql);
 
+            $sql = "DELETE FROM public.area";
+            $this->deleteArea = $this->conn->prepare($sql);
+
+            $sql = "DELETE FROM public.municipality";
+            $this->deleteMunicipality = $this->conn->prepare($sql);
+
+            $sql = "DELETE FROM public.\"town hall\"";
+            $this->deleteTownHall = $this->conn->prepare($sql);
+
+            $sql = "DELETE FROM public.settlement";
+            $this->deleteSettlement = $this->conn->prepare($sql);
+
+            $sql = "SELECT * FROM public.area WHERE area = :area";
+            $this->selectArea = $this->conn->prepare($sql);
+
+            $sql = "SELECT * FROM public.municipality WHERE municipality = :municipality";
+            $this->selectMunicipality = $this->conn->prepare($sql);
+
+            $sql = "SELECT * FROM public.\"town hall\" WHERE town_hall = :town_hall";
+            $this->selectTownHall = $this->conn->prepare($sql);
+
+            $sql = "SELECT * FROM public.settlement WHERE ekatte = :ekatte";
+            $this->selectSettlement = $this->conn->prepare($sql);
+
+            $sql = "SELECT * FROM public.area";
+            $this->getAreas = $this->conn->prepare($sql);
+
+            $sql = "SELECT * FROM public.municipality";
+            $this->getMunicipalities = $this->conn->prepare($sql);
+
+            $sql = "SELECT * FROM public.\"town hall\"";
+            $this->getTownHalls = $this->conn->prepare($sql);
+
+            $sql = "SELECT * FROM public.settlement";
+            $this->getSettlements = $this->conn->prepare($sql);
+
            // $sql = "SELECT * FROM google_maps_points WHERE pointId = :pointId";
            // $this->pointWithId = $this->connection->prepare($sql);
 
@@ -48,31 +99,125 @@
            // $this->getPoints = $this->connection->prepare($sql);
         }
 
+        public function getSettlementsNumber() {
+            try {
+                $this->getSettlements->execute();
+
+                return $this->getSettlements->rowCount();
+            } catch (PDOException $e) {
+                return "-1";
+            }
+        }
+        
+        public function getTownHallsNumber() {
+            try {
+                $this->getTownHalls->execute();
+
+                return $this->getTownHalls->rowCount();
+            } catch (PDOException $e) {
+                return "-1";
+            }
+        }
+
+        public function getMunicipalitiesNumber() {
+            try {
+                $this->getMunicipalities->execute();
+
+                return $this->getMunicipalities->rowCount();
+            } catch (PDOException $e) {
+                return "-1";
+            }
+        }
+
+        public function getAreasNumber() {
+            try {
+                $this->getAreas->execute();
+
+                return $this->getAreas->rowCount();
+            } catch (PDOException $e) {
+                return "-1";
+            }
+        }
+
+        public function findRecord($type, $data, $column) {
+            try {
+                $input = [
+                    $column => $data[$column]
+                ];
+
+                try {
+                    $type->execute($input);
+
+                    if($type->rowCount() == 0) {
+                        return ["success" => false];
+                    }
+
+                    return ["success" => true];
+                } catch(PDOException $e) {
+                    return ["success" => false];
+                }
+
+                return ["success" => true];
+            } catch(PDOException $e) {
+                return ["success" => false];
+            }
+        }
+
         public function addSettlement($data) {
             try {
-                $this->insertSettlement->execute($data);
-                return["success" => true];
-            } catch(Exception $e) {
-                echo "Connection failed\n s" . $e->getMessage(); 
+                $foundSettlement = $this->findRecord($this->selectSettlement, $data, "ekatte");
+                $foundTownHallReference = $this->findRecord($this->selectTownHall, $data, "town_hall_ID");
+
+                if (!$foundSettlement["success"]) {
+                    if (!$foundTownHallReference["success"]) {
+                        $townHallData = [
+                            "town_hall" => $data["town_hall_ID"],
+                            "name" => $data["name"],
+                            "municipality_ID" => substr($data["town_hall_ID"], 0, -3)
+                        ];
+
+                        $this->addTownHall($townHallData);
+                    }
+
+                    $this->insertSettlement->execute($data);
+                    return["success" => true];
+                }
+
+                return["success" => false];
+            } catch(PDOException $e) {
+                echo "Connection failed\n" . $e->getMessage(); 
                 return ["success" => false];
             }
         }
 
         public function addTownHall($data) {
             try {
-                $this->insertTownHall->execute($data);
-                return["success" => true];
-            } catch(Exception $e) {
-                echo "Connection failed\n" . $e->getMessage(); 
+                $foundTownHall = $this->findRecord($this->selectTownHall, $data, "town_hall");
+
+                if (!$foundTownHall["success"]) {
+                    $this->insertTownHall->execute($data);
+                    return["success" => true];
+                }
+                
+                return["success" => false];
+            } catch(PDOException $e) {
+                $asd = $data["name"];
+                echo "Connection failed $asd\n" . $e->getMessage(); 
                 return ["success" => false];
             }
         }
 
         public function addMunicipality($data) {
             try {
-                $this->insertMunicipality->execute($data);
-                return["success" => true];
-            } catch(Exception $e) {
+                $foundMunicipality = $this->findRecord($this->selectMunicipality, $data, "municipality");
+
+                if (!$foundMunicipality["success"]) {
+                    $this->insertMunicipality->execute($data);
+                    return["success" => true];
+                }
+
+                return["success" => false];
+            } catch(PDOException $e) {
                 echo "Connection failed\n" . $e->getMessage(); 
                 return ["success" => false];
             }
@@ -80,9 +225,15 @@
 
         public function addArea($data) {
             try {
-                $this->insertArea->execute($data);
-                return["success" => true];
-            } catch(Exception $e) {
+                $foundArea = $this->findRecord($this->selectArea, $data, "area");
+                
+                if (!$foundArea["success"]) {
+                    $this->insertArea->execute($data);
+                    return["success" => true];
+                }
+
+                return["success" => false];
+            } catch(PDOException $e) {
                 echo "Connection failed \n" . $e->getMessage(); 
                 return ["success" => false];
             }

@@ -55,11 +55,11 @@
         }
 
         public function readSettlementCSV() {
-            $isFirstRow = true;
+            $row = 0;
             if (($handle = fopen("../csv/Ek_atte.csv", "r")) !== FALSE) {
                 while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                    if ($isFirstRow) {
-                        $isFirstRow = false;
+                    if ($row < 2) {
+                        $row++;
                     }
                     else {
                         $this->addSettlement($data[0], $data[1], $data[2], $data[5]);
@@ -83,6 +83,8 @@
                 }
                 fclose($handle);
             }
+
+            $this->readSettlementCSV();
         }
 
         public function readMunicipalityCSV() {
@@ -99,6 +101,8 @@
                 }
                 fclose($handle);
             }
+
+            $this->readTownHallCSV();
         }
 
         public function readAreaCSV() {
@@ -114,12 +118,16 @@
                 }
                 fclose($handle);
             }
+
+            $this->readMunicipalityCSV();
         }
     }
 
     $settlement = new Settlement();
 
-    //$settlement->readAreaCSV();
+    //$settlement->addMunicipality("SFL02", "test", "SOF");
+    //$settlement->addArea("SOF", "Sofia");
+    $settlement->readAreaCSV();
     //$settlement->readMunicipalityCSV();
     //$settlement->readTownHallCSV();
     //$settlement->readSettlementCSV();
