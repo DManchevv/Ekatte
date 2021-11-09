@@ -23,6 +23,16 @@
         private $getMunicipalities;
         private $getAreas;
 
+        private $getSettlementInfo;
+        private $getTownHall;
+        private $getMunicipality;
+        private $getArea;
+        
+        private $t_v_m;
+        private $townHalls;
+        private $municipalities;
+        private $areas;
+
         public function __construct() {
             $config = parse_ini_file('config.ini', true);
             $type = $config['db']['type'];
@@ -31,6 +41,10 @@
             $name = $config['db']['name'];
             $user = $config['db']['user'];
             $password = $config['db']['password'];
+            $this->t_v_m = array();
+            $this->townHalls = array();
+            $this->municipalities = array();
+            $this->areas = array();
 
             $this->init($type, $port, $host, $name, $user, $password);
         }
@@ -93,8 +107,32 @@
             $sql = "SELECT * FROM public.settlement";
             $this->getSettlements = $this->conn->prepare($sql);
 
-            $sql = "SELECT name FROM public.settlement WHERE UPPER(name) LIKE UPPER(:name) LIMIT 10";
+            $sql = "SELECT DISTINCT name FROM public.settlement WHERE UPPER(name) LIKE UPPER(:name) LIMIT 10";
             $this->selectSettlementWithName = $this->conn->prepare($sql);
+
+            $sql = "SELECT t_v_m, town_hall_id FROM public.settlement WHERE UPPER(name) = UPPER(:name) LIMIT 10";
+            $this->getSettlementInfo = $this->conn->prepare($sql);
+
+            $sql = "SELECT T.name, T.municipality_id
+                    FROM public.settlement S INNER JOIN public.\"town hall\" T
+                    ON S.town_hall_id = T.town_hall
+                    WHERE S.town_hall_id = :town_hall_id";
+
+            $this->getTownHall = $this->conn->prepare($sql);
+
+            $sql = "SELECT M.name, M.area_id
+                    FROM public.\"town hall\" T INNER JOIN public.municipality M
+                    ON T.municipality_id = M.municipality
+                    WHERE T.municipality_id = :municipality_id";
+                    
+            $this->getMunicipality = $this->conn->prepare($sql);
+
+            $sql = "SELECT A.name 
+                    FROM public.municipality M INNER JOIN public.area A
+                    ON M.area_id = A.area
+                    WHERE M.area_id = :area_id";
+
+            $this->getArea = $this->conn->prepare($sql);
 
            // $sql = "SELECT * FROM google_maps_points WHERE pointId = :pointId";
            // $this->pointWithId = $this->connection->prepare($sql);
@@ -252,6 +290,73 @@
             }
         }
 
+        public function getSettlementInfo($data) {
+            try {
+                $this->getSettlementInfo->execute($data);
+                
+                while ($row = $this->getSettlementInfo->fetch(PDO::FETCH_ASSOC)) {
+                    $this->getTownHallInfo(["town_hall_id" => $row["town_hall_id"]]);
+                
+                    if (!in_array($row["t_v_m"], $this->t_v_m)) {
+                        array_push($this->t_v_m, $row["t_v_m"]);
+                    }
+                }
+
+                return ["t_v_m" => $this->t_v_m, "townHall" => $this->townHalls, "municipality" => $this->municipalities, "area" => $this->areas];
+
+            } catch (PDOException $e) {
+                return ["success" => false];
+            }
+        }
+
+        public function getTownHallInfo($data) {
+            try {
+                $this->getTownHall->execute($data);
+
+                while ($row = $this->getTownHall->fetch(PDO::FETCH_ASSOC)) {
+                    $this->getMunicipalityInfo(["municipality_id" => $row["municipality_id"]]);
+
+                    if (!in_array($row["name"], $this->townHalls)) {
+                        array_push($this->townHalls, $row["name"]);
+                    }
+                    
+                }
+            } catch(PDOException $e) {
+                return [];
+            }
+        }
+
+        public function getMunicipalityInfo($data) {
+            try {
+                $this->getMunicipality->execute($data);
+
+                while ($row = $this->getMunicipality->fetch(PDO::FETCH_ASSOC)) {
+                    $this->getAreaInfo(["area_id" => $row["area_id"]]);
+                    if (!in_array($row["name"], $this->municipalities)) {
+                        array_push($this->municipalities, $row["name"]);
+                    }
+                }
+
+
+            } catch(PDOException $e) {
+                return [];
+            }
+        }
+
+        public function getAreaInfo($data) {
+            try {
+                $this->getArea->execute($data);
+
+                while ($row = $this->getArea->fetch(PDO::FETCH_ASSOC)) {
+                    if (!in_array($row["name"], $this->areas)) {
+                        array_push($this->areas, $row["name"]);
+                    }
+                }
+                
+            } catch(PDOException $e) {
+                return [];
+            }
+        }
     }
 
 ?>

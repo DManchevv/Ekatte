@@ -12,6 +12,7 @@
             $this->in = file_get_contents('php://input');
             $this->name = json_decode($this->in, true);
             $this->name = $this->name["name"];
+
         }
 
         public function autocomplete() {

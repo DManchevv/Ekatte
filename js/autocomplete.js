@@ -1,8 +1,13 @@
 function load() {
     let searchBar = document.getElementById("findSettlement");
+    let t_v_m = document.getElementById("settlementType");
+    let townHall = document.getElementById("settlementTownHall");
+    let municipality = document.getElementById("settlementMunicipality");
+    let area = document.getElementById("settlementArea");
 
     searchBar.addEventListener('input', () => {
         generateAutocomplete(searchBar);
+        getResults(searchBar, t_v_m, townHall, municipality, area);
     });
 }
 
@@ -71,5 +76,57 @@ function closeAllLists(textField) {
 document.addEventListener("click", function (e) {
     closeAllLists(e.target);
 });
+
+function getResults(searchBar, typeSelect, townHallSelect, municipalitySelect, areaSelect) {
+    let xhr = new XMLHttpRequest();
+    let response;
+    xhr.open("POST", "../PHP/searchResults.php", true);
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            response = JSON.parse(this.responseText);
+            removeAllOptions(typeSelect);
+            removeAllOptions(townHallSelect);
+            removeAllOptions(municipalitySelect);
+            removeAllOptions(areaSelect);
+
+            for (let i = 0; i < response.t_v_m.length; i++) {
+                let opt = document.createElement('option');
+                opt.value = response.t_v_m[i];
+                opt.innerText = response.t_v_m[i];
+                typeSelect.appendChild(opt);
+            }
+
+            for (let i = 0; i < response.townHall.length; i++) {
+                let opt = document.createElement('option');
+                opt.value = response.townHall[i];
+                opt.innerText = response.townHall[i];
+                townHallSelect.appendChild(opt);
+            }
+
+            for (let i = 0; i < response.municipality.length; i++) {
+                let opt = document.createElement('option');
+                opt.value = response.municipality[i];
+                opt.innerText = response.municipality[i];
+                municipalitySelect.appendChild(opt);
+            }
+
+            for (let i = 0; i < response.area.length; i++) {
+                let opt = document.createElement('option');
+                opt.value = response.area[i];
+                opt.innerText = response.area[i];
+                areaSelect.appendChild(opt);
+            }
+        }
+    }
+
+    xhr.send(JSON.stringify({"name" : searchBar.value}));
+}
+
+function removeAllOptions(selectMenu) {
+    for (let i = selectMenu.options.length - 1; i >= 0; i--) {
+        selectMenu.remove(i);
+    }
+}
 
 window.onload = load;
