@@ -5,14 +5,38 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EKATTE</title>
+    <link rel="stylesheet" href="../css/styles.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="../js/statistics.js"></script>
+    <script src="../js/autocomplete.js"></script>
 </head>
 <body>
-    <p>Settlements: </p><input type="text" id="settlements"/><br>
-    <p>Town Halls: </p><input type="text" id="townHalls"/><br>
-    <p>Municipalities: </p><input type="text" id="municipalities"/><br>
-    <p>Areas: </p><input type="text" id="areas"/><br>
-
+    <p>Settlements: </p><input type="text" id="settlements" readonly/><br>
+    <p>Town Halls: </p><input type="text" id="townHalls" readonly/><br>
+    <p>Municipalities: </p><input type="text" id="municipalities" readonly/><br>
+    <p>Areas: </p><input type="text" id="areas" readonly/><br>
+    <div class="search-information">
+        <div class="search-bar">
+            <div class="autocomplete">
+                Въведи име на селище: <input id="findSettlement" type="text" />
+            </div>
+        </div>
+        <div class="town-or-village">
+            Град/село:
+            <input id="settlementType" readonly />
+        </div>
+        <div class="town-hall">
+            Кметство:
+            <input id="settlementTownHall" readonly />
+        </div>
+        <div class="municipality">
+            Община:
+            <input id="settlementMunicipality" readonly />
+        </div>
+        <div class="area">
+            Област:
+            <input id="settlementArea" readonly />
+        </div>
+    </div>
 </body>
 </html>

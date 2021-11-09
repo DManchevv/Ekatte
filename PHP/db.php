@@ -10,7 +10,8 @@
         private $selectArea;
         private $selectMunicipality;
         private $selectTownHall;
-        private $selectSettlement;
+        private $selectSettlementWithEkatte;
+        private $selectSettlementWithName;
 
         private $deleteArea;
         private $deleteMunicipality;
@@ -36,7 +37,7 @@
 
         private function init($type, $port, $host, $name, $user, $password) {
             try {
-                $this->conn = new PDO("$type:host=$host;port=$port;dbname=$name", $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+                $this->conn = new PDO("$type:host=$host;port=$port;dbname=$name", $user, $password,  array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
                 $this->prepareStatements();
             } catch(PDOException $e) {
                 echo "Connection failed\n" . $e->getMessage();
@@ -78,7 +79,7 @@
             $this->selectTownHall = $this->conn->prepare($sql);
 
             $sql = "SELECT * FROM public.settlement WHERE ekatte = :ekatte";
-            $this->selectSettlement = $this->conn->prepare($sql);
+            $this->selectSettlementWithEkatte = $this->conn->prepare($sql);
 
             $sql = "SELECT * FROM public.area";
             $this->getAreas = $this->conn->prepare($sql);
@@ -91,6 +92,9 @@
 
             $sql = "SELECT * FROM public.settlement";
             $this->getSettlements = $this->conn->prepare($sql);
+
+            $sql = "SELECT name FROM public.settlement WHERE UPPER(name) LIKE UPPER(:name) LIMIT 10";
+            $this->selectSettlementWithName = $this->conn->prepare($sql);
 
            // $sql = "SELECT * FROM google_maps_points WHERE pointId = :pointId";
            // $this->pointWithId = $this->connection->prepare($sql);
@@ -165,7 +169,7 @@
 
         public function addSettlement($data) {
             try {
-                $foundSettlement = $this->findRecord($this->selectSettlement, $data, "ekatte");
+                $foundSettlement = $this->findRecord($this->selectSettlementWithEkatte, $data, "ekatte");
                 $foundTownHallReference = $this->findRecord($this->selectTownHall, $data, "town_hall_ID");
 
                 if (!$foundSettlement["success"]) {
@@ -235,6 +239,15 @@
                 return["success" => false];
             } catch(PDOException $e) {
                 echo "Connection failed \n" . $e->getMessage(); 
+                return ["success" => false];
+            }
+        }
+
+        public function getSettlementsWithName($data) {
+            try {
+                $this->selectSettlementWithName->execute($data);
+                return["success" => true, "data" => $this->selectSettlementWithName->fetchAll(PDO::FETCH_ASSOC)];
+            } catch (PDOException $e) {
                 return ["success" => false];
             }
         }
